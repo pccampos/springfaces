@@ -130,7 +130,7 @@ public class UIMessageSource extends UIComponentBase {
 		if (definedPrefix != null) {
 			return getDefinedPrefixCodes(definedPrefix);
 		}
-		return new String[] { buildPrefixCodeFromViewRoot(context) };
+		return new String[] { buildPrefixCodeFromViewRoot(context), "" };
 	}
 
 	private String[] getDefinedPrefixCodes(String definedPrefix) {
@@ -140,6 +140,7 @@ public class UIMessageSource extends UIComponentBase {
 				codes.add(ensureEndsWithDot(code.trim()));
 			}
 		}
+		codes.add("");
 		return codes.toArray(new String[codes.size()]);
 	}
 

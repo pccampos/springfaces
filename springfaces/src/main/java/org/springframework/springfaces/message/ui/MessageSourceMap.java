@@ -19,6 +19,8 @@ import java.util.AbstractMap;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import org.springframework.context.MessageSource;
 import org.springframework.context.MessageSourceResolvable;
@@ -26,7 +28,6 @@ import org.springframework.context.NoSuchMessageException;
 import org.springframework.core.style.ToStringCreator;
 import org.springframework.springfaces.message.NoSuchObjectMessageException;
 import org.springframework.springfaces.message.ObjectMessageSource;
-import org.springframework.springfaces.message.ui.MessageSourceMap.Value;
 import org.springframework.util.Assert;
 
 /**
@@ -50,11 +51,16 @@ import org.springframework.util.Assert;
  * 
  * @author Phillip Webb
  */
-public class MessageSourceMap extends AbstractMap<Object, Value> {
+public class MessageSourceMap extends AbstractMap<Object, Object> {
 
 	private static final Object[] NO_ARGUMENTS = {};
 
 	private static final String[] NO_PREFIX_CODES = {};
+
+	/**
+	 * Pattern that checks if the message has unsetted parameters.
+	 */
+	private final Pattern PARAM_PATTERN = Pattern.compile("\\{\\d*\\}");
 
 	/**
 	 * The message source used to resolve messages.
@@ -65,6 +71,7 @@ public class MessageSourceMap extends AbstractMap<Object, Value> {
 	 * The prefix codes.
 	 */
 	private String[] prefixCodes;
+
 
 	/**
 	 * Create a new MessageSourceMap
@@ -119,12 +126,18 @@ public class MessageSourceMap extends AbstractMap<Object, Value> {
 	}
 
 	@Override
-	public Value get(Object key) {
+	public Object get(Object key) {
 		if (key == null) {
 			return null;
 		}
 		if (key instanceof String) {
-			return new MessageCodeValue((String) key, NO_ARGUMENTS);
+			MessageCodeValue value = new MessageCodeValue((String) key, NO_ARGUMENTS);
+			Matcher matcher = PARAM_PATTERN.matcher(value.toString());
+			if (matcher.find()) {
+				return value;
+			} else {
+				return value.toString();
+			}
 		}
 		if (this.messageSource instanceof ObjectMessageSource) {
 			return new ObjectMessageValue(key, NO_ARGUMENTS);
@@ -134,7 +147,7 @@ public class MessageSourceMap extends AbstractMap<Object, Value> {
 	}
 
 	@Override
-	public Set<Map.Entry<Object, Value>> entrySet() {
+	public Set<Map.Entry<Object, Object>> entrySet() {
 		throw new UnsupportedOperationException();
 	}
 
@@ -144,14 +157,7 @@ public class MessageSourceMap extends AbstractMap<Object, Value> {
 				.append("prefixCodes", this.prefixCodes).toString();
 	}
 
-	/**
-	 * A Value contained within the {@link MessageSourceMap}. Values are both themselves {@link Map}s and
-	 * {@link MessageSourceResolvable}.
-	 */
-	public static interface Value extends Map<Object, Value> {
-	}
-
-	private abstract class AbstractValue extends AbstractMap<Object, Value> implements Value {
+	private abstract class AbstractValue extends AbstractMap<Object, Object> {
 
 		private Object[] arguments;
 
@@ -160,19 +166,19 @@ public class MessageSourceMap extends AbstractMap<Object, Value> {
 		}
 
 		@Override
-		public Set<java.util.Map.Entry<Object, Value>> entrySet() {
+		public Set<java.util.Map.Entry<Object, Object>> entrySet() {
 			throw new UnsupportedOperationException();
 		}
 
 		@Override
-		public Value get(Object key) {
+		public Object get(Object key) {
 			Object[] childArguments = new Object[this.arguments.length + 1];
 			System.arraycopy(this.arguments, 0, childArguments, 0, this.arguments.length);
 			childArguments[childArguments.length - 1] = resolveMessageArgument(key);
 			return createNestedValue(childArguments);
 		}
 
-		protected abstract Value createNestedValue(Object[] arguments);
+		protected abstract Object createNestedValue(Object[] arguments);
 
 		protected Object[] getArguments() {
 			return this.arguments;
@@ -206,8 +212,14 @@ public class MessageSourceMap extends AbstractMap<Object, Value> {
 		}
 
 		@Override
-		protected Value createNestedValue(Object[] childArguments) {
-			return new MessageCodeValue(this.code, childArguments);
+		protected Object createNestedValue(Object[] childArguments) {
+			MessageCodeValue value = new MessageCodeValue(this.code, childArguments);
+			Matcher matcher = PARAM_PATTERN.matcher(value.toString());
+			if (matcher.find()) {
+				return value;
+			} else {
+				return value.toString();
+			}
 		}
 
 		public String[] getCodes() {
@@ -245,8 +257,14 @@ public class MessageSourceMap extends AbstractMap<Object, Value> {
 		}
 
 		@Override
-		protected Value createNestedValue(Object[] childArguments) {
-			return new ObjectMessageValue(this.object, childArguments);
+		protected Object createNestedValue(Object[] childArguments) {
+			ObjectMessageValue value = new ObjectMessageValue(this.object, childArguments);
+			Matcher matcher = PARAM_PATTERN.matcher(value.toString());
+			if (matcher.find()) {
+				return value;
+			} else {
+				return value.toString();
+			}
 		}
 
 		@Override

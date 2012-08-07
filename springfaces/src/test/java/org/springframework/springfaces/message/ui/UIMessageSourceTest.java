@@ -179,7 +179,7 @@ public class UIMessageSourceTest {
 	@Test
 	public void shouldSupportDefinedPrefixes() throws Exception {
 		this.uiMessageSource.setPrefix("a.b,a.b.c , a.b.c.d");
-		assertCodes("z", new String[] { "a.b.z", "a.b.c.z", "a.b.c.d.z" });
+		assertCodes("z", new String[] { "a.b.z", "a.b.c.z", "a.b.c.d.z", "z" });
 	}
 
 	@Test
@@ -246,7 +246,7 @@ public class UIMessageSourceTest {
 
 	private void assertBuildCode(String viewId, String expectedPrefix) throws IOException {
 		given(this.viewRoot.getViewId()).willReturn(viewId);
-		assertCodes("test", new String[] { expectedPrefix + "test" });
+		assertCodes("test", new String[] { expectedPrefix + "test", "test" });
 	}
 
 	private void assertCodes(String key, String[] expectedCodes) throws IOException {

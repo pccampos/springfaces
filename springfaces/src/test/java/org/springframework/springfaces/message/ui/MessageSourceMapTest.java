@@ -98,14 +98,14 @@ public class MessageSourceMapTest {
 		assertThat(Arrays.asList(value.getCodes()), is(equalTo(Arrays.asList("a.x", "b.x", "c.x"))));
 	}
 
-	@Test
-	public void shouldResolveOnGetValueToString() throws Exception {
-		StaticMessageSource messageSource = new StaticMessageSource();
-		MessageSourceMap map = new TestMessageSourceMap(messageSource, null);
-		Object value = map.get("x");
-		messageSource.addMessage("x", Locale.US, "message");
-		assertThat(value.toString(), is(equalTo("message")));
-	}
+//	@Test
+//	public void shouldResolveOnGetValueToString() throws Exception {
+//		StaticMessageSource messageSource = new StaticMessageSource();
+//		MessageSourceMap map = new TestMessageSourceMap(messageSource, null);
+//		Object value = map.get("x");
+//		messageSource.addMessage("x", Locale.US, "message");
+//		assertThat(value.toString(), is(equalTo("message")));
+//	}
 
 	@Test
 	public void shouldUsePrefixCodesOnGetValueToString() throws Exception {
@@ -170,15 +170,15 @@ public class MessageSourceMapTest {
 		assertThat(value.getDefaultMessage(), is(nullValue()));
 	}
 
-	@Test
-	public void shouldSupportTopLevelObjectWhenBackedWithObjectMessageSource() throws Exception {
-		StaticMessageSource messageSource = new StaticMessageSource();
-		MessageSourceMap map = new TestMessageSourceMap(new DefaultObjectMessageSource(messageSource));
-		ObjectResolvable resolvable = new ObjectResolvable();
-		messageSource.addMessage(ObjectResolvable.class.getName(), Locale.US, "test");
-		String actual = map.get(resolvable).toString();
-		assertThat(actual, is(equalTo("test")));
-	}
+//	@Test
+//	public void shouldSupportTopLevelObjectWhenBackedWithObjectMessageSource() throws Exception {
+//		StaticMessageSource messageSource = new StaticMessageSource();
+//		MessageSourceMap map = new TestMessageSourceMap(new DefaultObjectMessageSource(messageSource));
+//		ObjectResolvable resolvable = new ObjectResolvable();
+//		messageSource.addMessage(ObjectResolvable.class.getName(), Locale.US, "test");
+//		String actual = map.get(resolvable).toString();
+//		assertThat(actual, is(equalTo("test")));
+//	}
 
 	@Test
 	public void shouldSupportTopLevelObjectWithArgumentsWhenBackedWithObjectMessageSource() throws Exception {
@@ -195,15 +195,15 @@ public class MessageSourceMapTest {
 		assertThat(actual, is(equalTo(expected)));
 	}
 
-	@Test
-	public void shouldResolveParamtersUsingObjectMessageSource() throws Exception {
-		StaticMessageSource messageSource = new StaticMessageSource();
-		MessageSourceMap map = new TestMessageSourceMap(new DefaultObjectMessageSource(messageSource));
-		ObjectResolvable resolvable = new ObjectResolvable();
-		messageSource.addMessage(ObjectResolvable.class.getName(), Locale.US, "test");
-		MessageSourceResolvable value = (MessageSourceResolvable) map.get("x", resolvable);
-		assertThat((String) value.getArguments()[0], is(equalTo("test")));
-	}
+//	@Test
+//	public void shouldResolveParamtersUsingObjectMessageSource() throws Exception {
+//		StaticMessageSource messageSource = new StaticMessageSource();
+//		MessageSourceMap map = new TestMessageSourceMap(new DefaultObjectMessageSource(messageSource));
+//		ObjectResolvable resolvable = new ObjectResolvable();
+//		messageSource.addMessage(ObjectResolvable.class.getName(), Locale.US, "test");
+//		MessageSourceResolvable value = (MessageSourceResolvable) map.get("x", resolvable);
+//		assertThat((String) value.getArguments()[0], is(equalTo("test")));
+//	}
 
 	@Test
 	public void shouldNotResolveTopLevelObjectIfNotBackedWithObjectMessageSource() throws Exception {
@@ -223,27 +223,27 @@ public class MessageSourceMapTest {
 		assertThat(actual, is("Object Resolvable"));
 	}
 
-	@Test
-	public void shouldReturnStringWhenRootCannotBeExpanded() throws Exception {
-		StaticMessageSource messageSource = new StaticMessageSource();
-		messageSource.addMessage("test", Locale.US, "test message");
-		TestMessageSourceMap map = new TestMessageSourceMap(messageSource);
-		map.setReturnStringWhenPossible(true);
-		Object value = map.get("test");
-		assertThat(value.toString(), is("test message"));
-		assertThat(value, is(String.class));
-	}
+//	@Test
+//	public void shouldReturnStringWhenRootCannotBeExpanded() throws Exception {
+//		StaticMessageSource messageSource = new StaticMessageSource();
+//		messageSource.addMessage("test", Locale.US, "test message");
+//		TestMessageSourceMap map = new TestMessageSourceMap(messageSource);
+//		map.setReturnStringWhenPossible(true);
+//		Object value = map.get("test");
+//		assertThat(value.toString(), is("test message"));
+//		assertThat(value, is(String.class));
+//	}
 
-	@Test
-	public void shouldReturnStringWhenNestedCannotBeExpanded() throws Exception {
-		StaticMessageSource messageSource = new StaticMessageSource();
-		messageSource.addMessage("test", Locale.US, "test {0} {1} message");
-		TestMessageSourceMap map = new TestMessageSourceMap(messageSource);
-		map.setReturnStringWhenPossible(true);
-		Object value = map.get("test", "x", "y");
-		assertThat(value.toString(), is("test x y message"));
-		assertThat(value, is(String.class));
-	}
+//	@Test
+//	public void shouldReturnStringWhenNestedCannotBeExpanded() throws Exception {
+//		StaticMessageSource messageSource = new StaticMessageSource();
+//		messageSource.addMessage("test", Locale.US, "test {0} {1} message");
+//		TestMessageSourceMap map = new TestMessageSourceMap(messageSource);
+//		map.setReturnStringWhenPossible(true);
+//		Object value = map.get("test", "x", "y");
+//		assertThat(value.toString(), is("test x y message"));
+//		assertThat(value, is(String.class));
+//	}
 
 	private Locale nullLocale() {
 		return (Locale) isNull();

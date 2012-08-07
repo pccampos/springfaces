@@ -29,6 +29,7 @@ import org.springframework.core.style.ToStringCreator;
 import org.springframework.springfaces.message.NoSuchObjectMessageException;
 import org.springframework.springfaces.message.ObjectMessageSource;
 import org.springframework.util.Assert;
+import org.springframework.util.StringUtils;
 
 /**
  * Exposes a {@link MessageSource} as a read-only {@link Map} allowing EL expressions to easily resolve messages.
@@ -40,8 +41,6 @@ import org.springframework.util.Assert;
  * <tt>'welcome=Welcome {0} {1}'</tt> can be resolved using a <tt>person</tt> bean with the expression
  * <tt>#{messages.welcome[person.firstName][person.secondName]}</tt>.
  * <p>
- * Objects returned from the map can be displayed using <tt>toString()</tt>.
- * <p>
  * Objects can also be resolved directly when the <tt>messageSource</tt> is an {@link ObjectMessageSource}. For example
  * <tt>#{messages[someObject]}</tt> will resolve <tt>someObject</tt> using the
  * {@link ObjectMessageSource#getMessage(Object, Object[], Locale)} method.
@@ -50,6 +49,7 @@ import org.springframework.util.Assert;
  * {@link UnsupportedOperationException}.
  * 
  * @author Phillip Webb
+ * @author Pedro Casagrande
  */
 public class MessageSourceMap extends AbstractMap<Object, Object> {
 
@@ -57,10 +57,7 @@ public class MessageSourceMap extends AbstractMap<Object, Object> {
 
 	private static final String[] NO_PREFIX_CODES = {};
 
-	/**
-	 * Pattern that checks if the message has unsetted parameters.
-	 */
-	private final Pattern PARAM_PATTERN = Pattern.compile("\\{\\d*\\}");
+	private static final Pattern PARAMETER_PATTERN = Pattern.compile("\\{([\\w]+?)\\}");
 
 	/**
 	 * The message source used to resolve messages.
@@ -71,7 +68,6 @@ public class MessageSourceMap extends AbstractMap<Object, Object> {
 	 * The prefix codes.
 	 */
 	private String[] prefixCodes;
-
 
 	/**
 	 * Create a new MessageSourceMap
@@ -125,25 +121,43 @@ public class MessageSourceMap extends AbstractMap<Object, Object> {
 		throw exception;
 	}
 
+	/**
+	 * Indicates if the map should try and deduce when to return a <tt>String</tt> and when to return a nested
+	 * <tt>Map</tt>. This feature can be useful when component assume messages are always <tt>Strings</tt>.
+	 * @return <tt>true</tt> if strings should be returned when possible
+	 */
+	protected boolean returnStringsWhenPossible() {
+		return false;
+	}
+
 	@Override
 	public Object get(Object key) {
 		if (key == null) {
 			return null;
 		}
 		if (key instanceof String) {
-			MessageCodeValue value = new MessageCodeValue((String) key, NO_ARGUMENTS);
-			Matcher matcher = PARAM_PATTERN.matcher(value.toString());
-			if (matcher.find()) {
-				return value;
-			} else {
-				return value.toString();
-			}
+			return new MessageCodeValue((String) key, NO_ARGUMENTS).getReturnValue();
 		}
 		if (this.messageSource instanceof ObjectMessageSource) {
-			return new ObjectMessageValue(key, NO_ARGUMENTS);
+			return new ObjectMessageValue(key, NO_ARGUMENTS).getReturnValue();
 		}
 		throw new IllegalArgumentException("Unable to resolve " + key.getClass().getName()
 				+ " messages when not using an ObjectMessageSource.");
+	}
+
+	/**
+	 * Convenience method that can be used to resolve messages parameters with the specified chained arguments.
+	 * @param keys the keys to resolve
+	 * @return the message value
+	 */
+	@SuppressWarnings("unchecked")
+	public Object get(Object... keys) {
+		Object source = this;
+		for (Object key : keys) {
+			Assert.isInstanceOf(Map.class, source);
+			source = ((Map<Object, Object>) source).get(key);
+		}
+		return source;
 	}
 
 	@Override
@@ -175,13 +189,48 @@ public class MessageSourceMap extends AbstractMap<Object, Object> {
 			Object[] childArguments = new Object[this.arguments.length + 1];
 			System.arraycopy(this.arguments, 0, childArguments, 0, this.arguments.length);
 			childArguments[childArguments.length - 1] = resolveMessageArgument(key);
-			return createNestedValue(childArguments);
+			return createNestedValue(childArguments).getReturnValue();
 		}
-
-		protected abstract Object createNestedValue(Object[] arguments);
 
 		protected Object[] getArguments() {
 			return this.arguments;
+		}
+
+		protected abstract AbstractValue createNestedValue(Object[] arguments);
+
+		@Override
+		public abstract String toString();
+
+		/**
+		 * Returns the message with placeholder elements intact.
+		 * @return the message string or <tt>null</tt> if no message is found.
+		 */
+		protected abstract String toStringWithPlaceholders();
+
+		/**
+		 * Returns the appropriate return value (either a <tt>String</tt> or <tt>this</tt>) depending on the result of
+		 * {@link MessageSourceMap#returnStringsWhenPossible()} and if the correct number of arguments have been
+		 * supplied.
+		 * @return the return value
+		 */
+		public Object getReturnValue() {
+			if (returnStringsWhenPossible() && hasCorrentNumberOfArguments()) {
+				return toString();
+			}
+			return this;
+		}
+
+		private boolean hasCorrentNumberOfArguments() {
+			String messageWithPlaceHolders = toStringWithPlaceholders();
+			if (!StringUtils.hasLength(messageWithPlaceHolders)) {
+				return getArguments().length == 0;
+			}
+			Matcher matcher = PARAMETER_PATTERN.matcher(messageWithPlaceHolders);
+			int numberOfParameters = 0;
+			while (matcher.find()) {
+				numberOfParameters++;
+			}
+			return getArguments().length == numberOfParameters;
 		}
 	}
 
@@ -212,14 +261,8 @@ public class MessageSourceMap extends AbstractMap<Object, Object> {
 		}
 
 		@Override
-		protected Object createNestedValue(Object[] childArguments) {
-			MessageCodeValue value = new MessageCodeValue(this.code, childArguments);
-			Matcher matcher = PARAM_PATTERN.matcher(value.toString());
-			if (matcher.find()) {
-				return value;
-			} else {
-				return value.toString();
-			}
+		protected AbstractValue createNestedValue(Object[] childArguments) {
+			return new MessageCodeValue(this.code, childArguments);
 		}
 
 		public String[] getCodes() {
@@ -245,6 +288,32 @@ public class MessageSourceMap extends AbstractMap<Object, Object> {
 			}
 		}
 
+		@Override
+		protected String toStringWithPlaceholders() {
+			try {
+				return MessageSourceMap.this.messageSource.getMessage(getMessageSourceResolvableWithoutArguments(),
+						getLocale());
+			} catch (NoSuchMessageException e) {
+				return null;
+			}
+		}
+
+		private MessageSourceResolvable getMessageSourceResolvableWithoutArguments() {
+			return new MessageSourceResolvable() {
+
+				public String getDefaultMessage() {
+					return null;
+				}
+
+				public String[] getCodes() {
+					return MessageCodeValue.this.getCodes();
+				}
+
+				public Object[] getArguments() {
+					return NO_ARGUMENTS;
+				}
+			};
+		}
 	}
 
 	private class ObjectMessageValue extends AbstractValue {
@@ -257,14 +326,8 @@ public class MessageSourceMap extends AbstractMap<Object, Object> {
 		}
 
 		@Override
-		protected Object createNestedValue(Object[] childArguments) {
-			ObjectMessageValue value = new ObjectMessageValue(this.object, childArguments);
-			Matcher matcher = PARAM_PATTERN.matcher(value.toString());
-			if (matcher.find()) {
-				return value;
-			} else {
-				return value.toString();
-			}
+		protected AbstractValue createNestedValue(Object[] childArguments) {
+			return new ObjectMessageValue(this.object, childArguments);
 		}
 
 		@Override
@@ -274,6 +337,16 @@ public class MessageSourceMap extends AbstractMap<Object, Object> {
 						getArguments(), getLocale());
 			} catch (NoSuchObjectMessageException e) {
 				return String.valueOf(this.object);
+			}
+		}
+
+		@Override
+		protected String toStringWithPlaceholders() {
+			try {
+				return ((ObjectMessageSource) MessageSourceMap.this.messageSource).getMessage(this.object,
+						NO_ARGUMENTS, getLocale());
+			} catch (NoSuchObjectMessageException e) {
+				return null;
 			}
 		}
 	}

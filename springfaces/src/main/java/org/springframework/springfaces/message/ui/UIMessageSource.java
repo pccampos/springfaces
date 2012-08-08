@@ -141,14 +141,10 @@ public class UIMessageSource extends UIComponentBase {
 		} else {
 			prefixCodes.add(buildPrefixCodeFromViewRoot(context));
 		}
-<<<<<<< HEAD
-		return new String[] { buildPrefixCodeFromViewRoot(context), "" };
-=======
 		if (isPrefixOptional()) {
 			prefixCodes.add("");
 		}
 		return prefixCodes;
->>>>>>> d8e9ac411e4e034025f98a86f7942b5e67420535
 	}
 
 	private List<String> getDefinedPrefixCodes(String definedPrefix) {
@@ -158,12 +154,7 @@ public class UIMessageSource extends UIComponentBase {
 				codes.add(ensureEndsWithDot(code.trim()));
 			}
 		}
-<<<<<<< HEAD
-		codes.add("");
-		return codes.toArray(new String[codes.size()]);
-=======
 		return codes;
->>>>>>> d8e9ac411e4e034025f98a86f7942b5e67420535
 	}
 
 	/**
@@ -342,3 +333,4 @@ public class UIMessageSource extends UIComponentBase {
 		}
 	}
 }
+

@@ -16,9 +16,11 @@
 package org.springframework.springfaces.message.ui;
 
 import java.util.ArrayList;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.Set;
 
 import javax.faces.application.FacesMessage;
 import javax.faces.application.ProjectStage;
@@ -32,6 +34,7 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.MessageSource;
+import org.springframework.context.MessageSourceResolvable;
 import org.springframework.context.NoSuchMessageException;
 import org.springframework.springfaces.SpringFacesIntegration;
 import org.springframework.springfaces.message.ObjectMessageSource;
@@ -53,9 +56,10 @@ import org.springframework.util.StringUtils;
  * <li>Any file extension is removed</li>
  * <li>All '/' characters are converted to '.'</li>
  * </ul>
- * For example the prefix the view "<b><tt>/WEB-INF/pages/spring/example.xhtml</tt></b>" will use the prefix "<b>
- * <tt>pages.spring.example.</tt></b> ". Use the {@link #setPrefix(String) prefix} attribute if a different prefix is
- * required.
+ * For example the view "<b><tt>/WEB-INF/pages/spring/example.xhtml</tt></b>" will use the prefix "<b>
+ * <tt>pages.spring.example.</tt></b>". Use the {@link #setPrefix(String) prefix} attribute if a different prefix is
+ * required. If a prefixed message code is not found resolution is attempted without the prefix (use the
+ * {@link #setPrefixOptional(boolean) prefixOptional} attribute to change this behavior).
  * <p>
  * By default this component will attempt to deduce when a return value should be a <tt>String</tt> and when it should
  * be a nested map. This behavior can be changed using the {@link #setReturnStringsWhenPossible(boolean)
@@ -103,7 +107,7 @@ public class UIMessageSource extends UIComponentBase {
 	 * @return a {@link MessageSourceMap} instance
 	 */
 	private MessageSourceMap createMessageSourceMap(final FacesContext context) {
-		String[] prefixCodes = getPrefixCodes(context);
+		Set<String> prefixCodes = getPrefixCodes(context);
 		MessageSource messageSource = getSource();
 		ApplicationContext applicationContext = getApplicationContext(context);
 		Assert.state(((applicationContext != null) || (messageSource != null)),
@@ -111,7 +115,8 @@ public class UIMessageSource extends UIComponentBase {
 						+ "is enabled or set the 'source' attribute");
 		ObjectMessageSource objectMessageSource = ObjectMessageSourceUtils.getObjectMessageSource(messageSource,
 				applicationContext);
-		return new UIMessageSourceMap(context, objectMessageSource, prefixCodes, isReturnStringsWhenPossible());
+		return new UIMessageSourceMap(context, objectMessageSource,
+				prefixCodes.toArray(new String[prefixCodes.size()]), isReturnStringsWhenPossible());
 	}
 
 	private ApplicationContext getApplicationContext(FacesContext context) {
@@ -128,23 +133,37 @@ public class UIMessageSource extends UIComponentBase {
 	 * @param context the faces context
 	 * @return the prefix codes
 	 */
-	private String[] getPrefixCodes(FacesContext context) {
+	private Set<String> getPrefixCodes(FacesContext context) {
+		Set<String> prefixCodes = new LinkedHashSet<String>();
 		String definedPrefix = getPrefix();
 		if (definedPrefix != null) {
-			return getDefinedPrefixCodes(definedPrefix);
+			prefixCodes.addAll(getDefinedPrefixCodes(definedPrefix));
+		} else {
+			prefixCodes.add(buildPrefixCodeFromViewRoot(context));
 		}
+<<<<<<< HEAD
 		return new String[] { buildPrefixCodeFromViewRoot(context), "" };
+=======
+		if (isPrefixOptional()) {
+			prefixCodes.add("");
+		}
+		return prefixCodes;
+>>>>>>> d8e9ac411e4e034025f98a86f7942b5e67420535
 	}
 
-	private String[] getDefinedPrefixCodes(String definedPrefix) {
+	private List<String> getDefinedPrefixCodes(String definedPrefix) {
 		List<String> codes = new ArrayList<String>();
 		for (String code : StringUtils.commaDelimitedListToStringArray(definedPrefix)) {
 			if (StringUtils.hasLength(code)) {
 				codes.add(ensureEndsWithDot(code.trim()));
 			}
 		}
+<<<<<<< HEAD
 		codes.add("");
 		return codes.toArray(new String[codes.size()]);
+=======
+		return codes;
+>>>>>>> d8e9ac411e4e034025f98a86f7942b5e67420535
 	}
 
 	/**
@@ -187,42 +206,97 @@ public class UIMessageSource extends UIComponentBase {
 		return s;
 	}
 
-	// FIXME DC getters setters and add to taglib.xml
-
+	/**
+	 * Returns the request-scope variable that stores the message map.
+	 * @return the variable
+	 */
 	public String getVar() {
 		return (String) getStateHelper().eval(PropertyKeys.var);
 	}
 
+	/**
+	 * Sets the request-scope variable that stores the message map.
+	 * @param var the variable
+	 */
 	public void setVar(String var) {
 		getStateHelper().put(PropertyKeys.var, var);
 	}
 
+	/**
+	 * Returns the message source that will be used to resolve messages. If not specified the {@link ApplicationContext}
+	 * will be used.
+	 * @return the message source
+	 */
 	public MessageSource getSource() {
 		return (MessageSource) getStateHelper().eval(PropertyKeys.source);
 	}
 
+	/**
+	 * Sets the message source that will be used to resolve messages. If not specified the {@link ApplicationContext}
+	 * will be used.
+	 * @param source the message source
+	 */
 	public void setSource(MessageSource source) {
 		getStateHelper().put(PropertyKeys.source, source);
 	}
 
+	/**
+	 * Returns the prefix that will be used when resolving messages. Multiple prefixes can be defined using a comma
+	 * separated list.
+	 * @return the prefix
+	 * @see #isPrefixOptional()
+	 */
 	public String getPrefix() {
 		return (String) getStateHelper().eval(PropertyKeys.prefix, null);
 	}
 
+	/**
+	 * Set the prefix that will be used when resolving messages. Multiple prefixes can be defined using a comma
+	 * separated list.
+	 * @param prefix the prefix
+	 * @see #setPrefixOptional(boolean)
+	 */
 	public void setPrefix(String prefix) {
 		getStateHelper().put(PropertyKeys.prefix, prefix);
 	}
 
+	/**
+	 * Returns if the component should determine when <tt>String</tt> values are to be returned. This attribute can be
+	 * set to <tt>false</tt> if components support rendering <tt>Object<tt> output.  Defaults to <tt>true</tt> when not
+	 * specified.
+	 * @return if strings should be returned when possible
+	 */
 	public boolean isReturnStringsWhenPossible() {
 		return (Boolean) getStateHelper().eval(PropertyKeys.returnStringsWhenPossible, true);
 	}
 
+	/**
+	 * Set if the component should determine when <tt>String</tt> values are to be returned. This attribute can be set
+	 * to <tt>false</tt> if components support rendering <tt>Object<tt> output.
+	 * @param returnStringsWhenPossible if strings should be returned when possible
+	 */
 	public void setReturnStringsWhenPossible(boolean returnStringsWhenPossible) {
 		getStateHelper().put(PropertyKeys.returnStringsWhenPossible, returnStringsWhenPossible);
 	}
 
+	/**
+	 * Returns if the prefix is optional (ie an additional empty prefix is added).
+	 * @return if the prefix is optional
+	 */
+	public boolean isPrefixOptional() {
+		return (Boolean) getStateHelper().eval(PropertyKeys.prefixOptional, true);
+	}
+
+	/**
+	 * Set if the prefix is optional (ie an additional <tt>''</tt> prefix is added).
+	 * @param prefixOptional if the prefix is optional
+	 */
+	public void setPrefixOptional(boolean prefixOptional) {
+		getStateHelper().put(PropertyKeys.prefixOptional, prefixOptional);
+	}
+
 	private enum PropertyKeys {
-		source, var, prefix, returnStringsWhenPossible
+		source, var, prefix, returnStringsWhenPossible, prefixOptional
 	}
 
 	private class UIMessageSourceMap extends MessageSourceMap {
@@ -244,16 +318,22 @@ public class UIMessageSource extends UIComponentBase {
 		}
 
 		@Override
-		protected void handleNoSuchMessageException(NoSuchMessageException exception) {
+		protected void handleNoSuchMessageException(MessageSourceResolvable resolvable, NoSuchMessageException exception) {
 			if (this.context.isProjectStage(ProjectStage.Production)) {
 				throw exception;
 			}
-			if (UIMessageSource.this.logger.isWarnEnabled()) {
-				UIMessageSource.this.logger.warn(exception.getMessage(), exception);
+			String message = exception.getMessage();
+			String[] codes = resolvable.getCodes();
+			if (codes != null && codes.length > 1) {
+				message = message + " Attempted to resolve message with the following codes '"
+						+ StringUtils.arrayToDelimitedString(codes, ", ") + "'";
 			}
-			FacesMessage message = new FacesMessage(exception.getMessage());
-			message.setSeverity(FacesMessage.SEVERITY_WARN);
-			this.context.addMessage(UIMessageSource.this.getClientId(this.context), message);
+			if (UIMessageSource.this.logger.isWarnEnabled()) {
+				UIMessageSource.this.logger.warn(message, exception);
+			}
+			FacesMessage facesMessage = new FacesMessage(message);
+			facesMessage.setSeverity(FacesMessage.SEVERITY_WARN);
+			this.context.addMessage(UIMessageSource.this.getClientId(this.context), facesMessage);
 		}
 
 		@Override

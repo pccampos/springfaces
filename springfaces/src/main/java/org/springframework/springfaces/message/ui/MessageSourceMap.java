@@ -45,7 +45,7 @@ import org.springframework.util.StringUtils;
  * <tt>#{messages[someObject]}</tt> will resolve <tt>someObject</tt> using the
  * {@link ObjectMessageSource#getMessage(Object, Object[], Locale)} method.
  * <p>
- * NOTE: Only the {@link #get(Object)} method can be used on this {@link Map}. All other calls will throw an
+ * NOTE: Only the {@link #get(Object) get} method can be used on this {@link Map}, all other calls will throw an
  * {@link UnsupportedOperationException}.
  * 
  * @author Phillip Webb
@@ -115,9 +115,10 @@ public class MessageSourceMap extends AbstractMap<Object, Object> {
 	/**
 	 * Called to handle any {@link NoSuchMessageException} exceptions. The default behavior throws the exception,
 	 * subclasses can override to handle exception differently.
+	 * @param resolvable The message resolvable
 	 * @param exception the exception to handle
 	 */
-	protected void handleNoSuchMessageException(NoSuchMessageException exception) {
+	protected void handleNoSuchMessageException(MessageSourceResolvable resolvable, NoSuchMessageException exception) {
 		throw exception;
 	}
 
@@ -283,7 +284,7 @@ public class MessageSourceMap extends AbstractMap<Object, Object> {
 			try {
 				return MessageSourceMap.this.messageSource.getMessage(this, getLocale());
 			} catch (NoSuchMessageException e) {
-				handleNoSuchMessageException(e);
+				handleNoSuchMessageException(this, e);
 				return this.code;
 			}
 		}

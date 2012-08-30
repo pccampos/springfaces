@@ -10,8 +10,10 @@
 		<releaseinfo>Version 0.0.1</releaseinfo>
 		<authorgroup>
 			<author>
-				<firstname>Phillip</firstname>
-				<surname>Webb</surname>
+				<personname>
+					<firstname>Phillip</firstname>
+					<surname>Webb</surname>
+				</personname>
 			</author>
 		</authorgroup>
 		<copyright>
@@ -19,36 +21,456 @@
 			<holder>Phillip Webb</holder>
 		</copyright>
 		<legalnotice>
-			<para>Copies of this document may be made for your own use and for distribution to others, provided that 
-			you do not charge any fee for such copies and further provided that each copy contains this Copyright 
-			Notice, whether distributed in print or electronically.</para>
+			<para>Copies of this document may be made for your own use and for
+				distribution to others, provided that
+				you do not charge any fee for such copies and further provided that
+				each copy contains this Copyright
+				Notice, whether distributed in print or electronically.
+			</para>
 		</legalnotice>
 	</info>
-
+	
 	<toc />
 
-	<preface id="preface">
+	<preface xml:id="preface">
 		<title>Preface</title>
 		<para>TODO</para>
 	</preface>
-	
-	<part id="part-id">
-		<title>Example Part</title>
-		<partintro>
-			<para>Intro intro intro.</para>
-		</partintro>
-		<chapter id="examplechapter">
-			<title>Chapter Title</title>
-			<section id="examplesection">
-				<title>Example Section</title>
-				<para>Blah <emphasis>blah</emphasis> blah</para>
-				    <remark><para>A remark</para></remark>
-				    <note><para>A note</para></note>
-				    <programlisting language="java">
-public static class Example {
+
+	<chapter>
+		<title>Getting Started</title>
+		<para>TODO maven references, jar structure, namespace</para>
+	</chapter>
+
+	<chapter xml:id="core-spring-faces">
+		<title>JSF Integration</title>
+		<para>TODO</para>
+		<sect1 xml:id="converters">
+			<title>Converters</title>
+			<para>
+				JSF converters are used to perform the Object-to-String and String-to-Object 
+				conversion required to render and decode component values.  Classically implementations of the 
+				<code>javax.faces.convert.Converter</code> interface are registered in your <code>faces-config.xml</code> 
+				file or marked with the <code>javax.faces.convert.FacesConverter</code> annotation.
+			</para>
+ 			<sect2>
+ 				<title>JSF Converters as Spring Beans</title>
+				<para>
+					SpringFaces allows JSF converters to be registered as regular Spring beans.  All the common Spring 
+					programming idioms (such as dependency injection and AOP) can now be used with JSF converters.
+				</para>
+				<para>
+					By default any Spring Bean that implements the <code>javax.faces.Converter</code> interface will 
+					be registered as a JSF converter using the bean name.  The example below shows how a 
+					<code>Converter</code> bean can be referenced from a JSF <code>XHTML</code> page.
+				</para>
+<programlisting language="java">
+@Component
+public class MyConverterBean implements Converter {
+
+    public Object getAsObject(FacesContext context, UIComponent component, String value) {
+		// ...
+	}
+
+    public String getAsString(FacesContext context, UIComponent component, Object value) {
+		// ...
+	}
+}</programlisting>
+				<programlisting language="xml">
+&lt;h:inputText ... converter="myConverterBean" /&gt;</programlisting>
+			</sect2>
+			<sect2 xml:id="converters-for-class">
+				<title>Registering a converter for a specific Class</title>
+				<para>
+					Converters can also be registered such that they are always used for a particular 
+					<code>Class</code>.  Using standard JSF annotations this would be achieved using 
+					<code>@FacesConverter(forClass=SpecificClass.class)</code>. With spring beans the 
+					<code>org.springframework.springfaces.bean.ForClass</code> annotation can be used.
+				</para>
+				<programlisting language="java">
+@Component
+@ForClass(SpecificClass.class)
+public class MyConverterBean implements Converter {
+
+	public Object getAsObject(FacesContext context, UIComponent component, String value) {
+		// ...
+	}
+
+	public String getAsString(FacesContext context, UIComponent component, Object value) {
+		SpecificClass v = (SpecificClass) value;
+		// ...
+	}
+}</programlisting>
+				<para>
+					More complex "for class" registrations can also be supported using the 
+					<code>org.springframework.springfaces.bean.ConditionalForClass</code> interface.  For example,
+					using this technique it is possible to register a <code>Converter</code> for all classes with
+					a given annotation. 
+				</para>
+				<programlisting language="java">
+@Component
+public class MyConverterBean implements Converter, ConditionalForClass {
+
+	public boolean isForClass(Class&lt;?&gt; targetClass) {
+		// Some conditional, eg. targetClass has a specific annotation
+	}
+
+	public Object getAsObject(FacesContext context, UIComponent component, String value) {
+		// ...
+	}
+
+	public String getAsString(FacesContext context, UIComponent component, Object value) {
+		SpecificClass v = (SpecificClass) value;
+		// ...
+	}
+}</programlisting>				
+			</sect2>
+			<sect2>
+				<title>Support for generics</title>
+				<para>
+					Many times a JSF converter will need to cast the incoming object parameter of the 
+					<code>getAsString</code> to	a specific type.  SpringFaces provides a convenient alternative 
+					variant of the <code>javax.faces.convert.Converter</code> interface that includes a generic type.
+					The <code>org.springframework.springfaces.convert.Converter</code> class is functionally 
+					equivalent to the standard JSF interface.
+				</para>
+				<para>
+					When using the generic variant of the <code>Converter</code> interface the value attribute of 
+					<code>@ForClass</code> can be omitted  as it can be deduced from the generic.
+				</para>
+				<programlisting language="java">
+@Component
+@ForClass
+public class MyConverterBean implements Converter&lt;SpecificClass&gt; {
+
+	public SpecificClass getAsObject(FacesContext context, UIComponent component, String value) {
+		// ...
+	}
+
+	public String getAsString(FacesContext context, UIComponent component, SpecificClass value) {
+		// ...
+	}
+}</programlisting>
+			</sect2>
+			<sect2>
+				<title>Disabling converter support</title>
+				<para>
+					JSF converter support can be disabled if necessary when configuring SpringFaces integration.
+				</para>
+				<programlisting language="xml">
+&lt;?xml version="1.0" encoding="UTF-8"?&gt;
+&lt;beans xmlns="http://www.springframework.org/schema/beans"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" 
+	xmlns:faces="http://www.springframework.org/schema/springfaces"
+	xsi:schemaLocation="
+		http://www.springframework.org/schema/beans
+		http://www.springframework.org/schema/beans/spring-beans.xsd
+		http://www.springframework.org/schema/springfaces
+		http://www.springframework.org/schema/springfaces/springfaces.xsd"&gt;
+			
+	&lt;faces:integration converters="false"/&gt;
+&lt;beans/&gt;</programlisting>
+			</sect2>
+		</sect1>
+		<sect1>
+			<title>Validators</title>
+			<para>
+				JSF <code>Validators</code> can be used to validate user submitted input.  Classically 
+				implementations of the <code>javax.faces.validator.Validator</code> interface are 
+				registered in your <code>faces-config.xml</code> file or marked with the 
+				<code>javax.faces.validator.FacesValidator</code> annotation. 
+			</para>  
+			<sect2>
+ 				<title>JSF Validators as Spring Beans</title>
+				<para>
+					As with the <link linkend="converters"><code>Converter</code></link> 
+					support, SpringFaces allows Spring Beans to be used as JSF <code>Validators</code>.
+				</para>
+				<para>
+					Any Spring Bean that implements the <code>javax.faces.validator.Validator</code> interface
+					will automatically registered as a JSF validator using the bean name.  The example below
+					shows how a <code>Validator</code> can be referenced from a JSF <code>XHTML</code> page.
+				</para>
+				<programlisting language="java">
+@Component
+public class MyValidatorBean implements Validator {
+	    
+	    public void validate(FacesContext context, UIComponent component, Object value) throws ValidatorException {
+	    	// ...
+	    }
+}</programlisting>
+				<programlisting language="xml" >
+&lt;h:inputText ... validator="myValidatorBean" /&gt;</programlisting>
+			</sect2>
+			<sect2>
+				<title>Registering a Validator for a specific Class</title>
+				<para>
+					The <code>org.springframework.springfaces.bean.ForClass</code> annotation can be used to associate
+					a <code>Validator</code> with a specific <code>Class</code>.  In such cases the validator will be
+					automatically called for all suitable instances, regardless of any validators specified in the JSF
+					mark-up.  
+				</para>
+				<programlisting language="java">
+@Component
+@ForClass(SpecificClass.class)
+public class MyValidatorBean implements Validator {
+	    
+	    public void validate(FacesContext context, UIComponent component, Object value) throws ValidatorException {
+	    	SpecificClass v = (SpecificClass)value;
+	    	// ...
+	    }
+}</programlisting>
+				<para>
+					As with <link linkend="converters-for-class"><code>Converters</code></link> the 
+					<code>org.springframework.springfaces.bean.ConditionalForClass</code> interface can be used if
+					more complex conditional logic is required.
+				</para>
+			</sect2>
+			<sect2>
+				<title>Support for generics</title>
+				<para>
+					To remove the need to cast the <code>value</code> parameter SpringFaces provides the 
+					alternative <code>org.springframework.springfaces.validator.Validator</code> interface.
+					This variation works in the same way as the standard JSF interface.    
+				</para>
+				<para>
+					When using the generic variant of the <code>Validator</code> interface the value 
+					attribute of <code>@ForClass</code> can be omitted as it can be deduced from the generic. 
+				</para>
+				<programlisting language="java">
+@Component
+@ForClass
+public class MyValidatorBean implements Validator&lt;SpecificClass&gt; {
+	    
+	    public void validate(FacesContext context, UIComponent component, SpecificClass value) throws ValidatorException {
+	    	// ...
+	    }
+}</programlisting>				
+			</sect2>
+			<sect2>
+				<title>Disabling validator support</title>
+				<para>
+					JSF validator support can be disabled if necessary when configuring SpringFaces integration.
+				</para>
+				<programlisting language="xml">
+&lt;?xml version="1.0" encoding="UTF-8"?&gt;
+&lt;beans xmlns="http://www.springframework.org/schema/beans"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" 
+	xmlns:faces="http://www.springframework.org/schema/springfaces"
+	xsi:schemaLocation="
+		http://www.springframework.org/schema/beans
+		http://www.springframework.org/schema/beans/spring-beans.xsd
+		http://www.springframework.org/schema/springfaces
+		http://www.springframework.org/schema/springfaces/springfaces.xsd"&gt;
+			
+	&lt;faces:integration validators="false"/&gt;
+&lt;beans/&gt;</programlisting>
+			</sect2>			
+		</sect1>
+		<sect1>
+			<title>Internationalization and Localization</title>
+			<para>TODO</para>
+			<sect2>
+				<title>Spring MessageSource</title>
+				<para>
+					The <code>org.springframework.context.MessageSource</code> interface provides a standard way for 
+					Spring applications to support internationalization.  SpringFaces offers support for any
+					<code>MessageSource</code> using the <code>&lt;s:messageSource&gt;</code> component.      
+				</para>
+				<para>
+					The <code>&lt;s:messageSource&gt;</code> component has been designed as a drop-in replacement
+					to the standard <code>&lt;f:loadBundle&gt;</code> JSF Component.  The example below shows 
+					how the component can be used.
+				</para>
+				<programlisting language="xml">
+&lt;s:messageSource source="#{messageSource}" var="messages"/&gt;
+&lt;p&gt;
+	&lt;h:outputText value="#{messages.hello}"/&gt;
+&lt;/p&gt;</programlisting>
+				<para>
+					The source attribute can be any EL expression that resolves to a <code>MessageSource</code> instance. 
+					If the source is not specified the Spring <code>ApplicationContext</code> will be used. The 
+					<code>var</code> attribute is the name of the variable that will be used to access the messages.
+				</para>
+				<sect3>
+					<title>Page IDs</title>
+					<para>
+						Unlike standard JSF, the key of the message to load will be built from the ID of the page 
+						being rendered. For example, assuming the page above is from the file 
+						<code>WEB-INF/pages/messages/simple.xhtml</code>, the key used to load the <code>hello</code>
+						message will be <code>pages.messages.simple.hello</code>. 
+					</para>
+					<para>
+						Using these compound keys prevents message key clashes and keeps the page mark-up nice and 
+						concise. You can use the <code>prefix</code> attribute to override this behaviour if you 
+						need to.
+					</para>
+				</sect3>
+				<sect3>
+					<title>Missing Message Keys</title>
+					<para>
+						If you make reference to message in your XHTML that you have forgotten to define you will 
+						either see a warning message (when in development) or an exception will be thrown 
+						(when in production).
+					</para>
+				</sect3>
+				<sect3>
+					<title>Parameters</title>
+					<para>
+						As with standard JSF, your messages and include place-holders for use with 
+						<code>&lt;h:outputFormat&gt;</code>.
+					</para>
+					<programlisting language="text">
+pages.message.simple.welcome=Welcome to {1} with {0}</programlisting>
+					<programlisting language="xml">
+&lt;h:outputFormat value="#{messages.welcome}"&gt;
+	&lt;f:param value="Spring"/&gt;
+	&lt;f:param value="JSF"/&gt;
+&lt;/h:outputFormat&gt;</programlisting>						
+					<para>
+						The <code>&lt;h:outputFormat&gt;</code> tag is a little bit verbose, so for convenience, 
+						Spring messages can be used as a <code>Map</code>. This allows you to reference place-holders in a 
+						much more concise way:
+					</para>
+					<programlisting language="xml">
+&lt;s:messageSource source="#{messageSource}" var="messages"/&gt;
+&lt;h:outputText value="#{messages.welcome['Spring']['JSF']}"/&gt;</programlisting>
+				</sect3>
+			</sect2>
+			<sect2>
+				<title>ObjectMessageSource</title>
+				<para>
+					Often it is necessary to convert java <code>Objects</code> into localized messages.  Common 
+					scenarios here include converting <code>enum</code> values or displaying messages for a 
+					specific type of <code>Exception</code>.
+				</para>
+				<para>
+					Several of the components provided by SpringFaces implicitly support Object-to-Message 
+					conversion.  The example below shows how the <code>ExampleObject</code> class can
+					be mapped to a message using <code>&lt;s:messageSource&gt;</code>.
+				</para>
+				<programlisting language="java">
+package org.example;
+public class ExampleObject {
+}</programlisting>
+				<programlisting language="xml">
+&lt;s:messageSource source="#{messageSource}" var="messages"/&gt;
+&lt;h:outputText value="#{messages[exampleInstance]}"/&gt;</programlisting>
+				<sect3>
+					<title>Object Message Keys</title>
+					<para>
+						By default objects are mapped to messages using a key constructed from their fully
+						qualified class name.  The <code>ExampleObject</code> above would resolve using the
+						key <code>org.example.ExampleObject</code>
+					</para>
+					<programlisting language="text">
+org.example.ExampleObject=example</programlisting>
+					<para>
+						When resolving an <code>Enum</code> object they key also includes the enum value,
+						for example:
+					</para>
+					<programlisting language="java">
+package org.example;
+
+public enum ExampleObject {
+	ONE, //mapped to message key org.example.ExampleObject.ONE
+	TWO  //mapped to message key org.example.ExampleObject.TWO
 }
-				    </programlisting>
-			</section>
-		</chapter>
-	</part>
+</programlisting>
+				</sect3>
+				<sect3>
+					<title>Message parameters</title>
+					<para>
+						Message values can refer to properties of the Object being resolved using the
+						<code>{name}</code> syntax.  For example:
+					</para>
+					<programlisting language="java">
+package org.example;
+public class PersonName {
+	// ...
+	public String getFirst() {...}
+	public String getLast() {...}
+}
+</programlisting>
+					<programlisting language="text"> 
+org.example.PersonName=Name is {first} {last}</programlisting>
+				</sect3>
+				<sect3>
+					<title>Custom Object Message Stategies</title>
+					<para>
+						Internally the <code>org.springframework.springfaces.message.ObjectMessageSource</code>
+						interface is used to resolve object messages.  If you need to implement a custom object
+						message strategy you can create your own implementation of this interface and register
+						it with Spring using the bean name <code>messageSource</code>.
+					</para>
+					<para>
+						The <code>org.springframework.springfaces.message.DefaultObjectMessageSource</code>
+						class provides a good basis for any custom strategies; override the 
+						<code>resolveCode</code>, <code>resolveMessage</code> or <code>resolveToString</code> 
+						methods.
+					</para>
+				</sect3>
+			</sect2>
+		</sect1>
+		<sect1>
+			<title>Pagination</title>
+			<para>TODO</para>
+		</sect1>
+		<sect1>
+			<title>Select Items</title>
+			<para>TODO</para>
+		</sect1>
+		<sect1>
+			<title>Templating</title>
+			<para>TODO</para>
+			<!-- 
+			- decorate all
+			- component info
+			 -->
+		</sect1>
+		<sect1>
+			<title>Exception Handlers</title>
+			<para>TODO</para>
+			<!-- Custom EH, Object Messages -->
+		</sect1>
+		<sect1>
+			<title>Expression Language</title>
+			<para>TODO</para>
+			<!-- 
+			SPEL Support
+			EL Base Classes
+			-->
+		</sect1>
+		<sect1>
+			<title>Utilities</title>
+			<para>TODO</para>
+			<!-- 
+			- FacesUtils
+			- FacesVendor
+			-->			
+		</sect1>
+	</chapter>
+	
+	<chapter>
+		<title>JSF with Spring MVC</title>
+		<para>TODO</para>
+		
+		<!-- 
+		Reaching beans
+		- Spring beans
+		- MVC model
+		
+		Implicit Variables
+		
+		Navigation
+		
+		- implicit
+		- to @RequestMappings
+		  - With ReverseDataBinder
+		- programatic
+		
+		Converters
+		- @FacesConverterId
+		 -->
+	</chapter>
 </book>

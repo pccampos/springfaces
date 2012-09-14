@@ -1,0 +1,102 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+	<modelVersion>4.0.0</modelVersion>
+	<parent>
+		<groupId>org.springframework.springfaces</groupId>
+		<artifactId>springfaces-samples</artifactId>
+		<version>0.0.1-SNAPSHOT</version>
+	</parent>
+	<artifactId>springfaces-simplebean</artifactId>
+	<packaging>war</packaging>
+	<build>
+		<plugins>
+			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-eclipse-plugin</artifactId>
+				<configuration>
+					<additionalConfig>
+						<file>
+							<name>.settings/org.eclipse.jdt.ui.prefs</name>
+							<location>../../eclipse/org.eclipse.jdt.ui.prefs</location>
+						</file>
+						<file>
+							<name>.settings/org.eclipse.jdt.core.prefs</name>
+							<location>../../eclipse/org.eclipse.jdt.core.prefs</location>
+						</file>
+					</additionalConfig>
+				</configuration>
+			</plugin>
+			<plugin>
+				<groupId>org.codehaus.cargo</groupId>
+				<artifactId>cargo-maven2-plugin</artifactId>
+				<configuration>
+					<wait>false</wait>
+					<container>
+						<containerId>tomcat6x</containerId>
+						<zipUrlInstaller>
+							<url>http://archive.apache.org/dist/tomcat/tomcat-6/v6.0.33/bin/apache-tomcat-6.0.33.zip</url>
+						</zipUrlInstaller>
+					</container>
+					<configuration>
+						<deployables>
+							<deployable>
+								<properties>
+									<context>${project.artifactId}</context>
+								</properties>
+							</deployable>
+						</deployables>
+					</configuration>
+				</configuration>
+			</plugin>
+		</plugins>
+	</build>
+	<dependencies>
+		<!-- Spring Faces -->
+		<dependency>
+			<groupId>${project.groupId}</groupId>
+			<artifactId>springfaces-mvc</artifactId>
+			<version>${project.version}</version>
+		</dependency>
+
+		<!-- Core JSF -->
+		<dependency>
+			<groupId>com.sun.faces</groupId>
+			<artifactId>jsf-api</artifactId>
+		</dependency>
+		<dependency>
+			<groupId>com.sun.faces</groupId>
+			<artifactId>jsf-impl</artifactId>
+		</dependency>
+
+		<!-- Other -->
+		<dependency>
+			<groupId>cglib</groupId>
+			<artifactId>cglib</artifactId>
+		</dependency>
+		<dependency>
+			<groupId>javax.servlet</groupId>
+			<artifactId>servlet-api</artifactId>
+			<scope>provided</scope>
+		</dependency>
+	</dependencies>
+	<profiles>
+		<profile>
+			<id>tomcat</id>
+			<activation>
+				<activeByDefault>true</activeByDefault>
+			</activation>
+			<dependencies>
+				<!-- EL 2 support for tomcat -->
+				<dependency>
+					<groupId>javax.el</groupId>
+					<artifactId>el-api</artifactId>
+				</dependency>
+				<dependency>
+					<groupId>org.glassfish.web</groupId>
+					<artifactId>el-impl</artifactId>
+				</dependency>
+			</dependencies>
+		</profile>
+	</profiles>
+</project>

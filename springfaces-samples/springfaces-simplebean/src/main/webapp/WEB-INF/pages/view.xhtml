@@ -1,0 +1,34 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<ui:composition xmlns="http://www.w3.org/1999/xhtml"
+	xmlns:ui="http://java.sun.com/jsf/facelets"
+	xmlns:h="http://java.sun.com/jsf/html"
+	xmlns:f="http://java.sun.com/jsf/core"
+	xmlns:s="http://springframework.org/tags/springfaces">
+
+	<h:head>
+		<title>Spring Conditional Renderer Test</title>
+	</h:head>
+
+	<h:body>
+		<h:form id="form">
+			<h:panelGrid columns="2">
+				<h:outputText value="#{bean.firstMessage}"/>
+				<h:commandLink update="@form">
+					<f:setPropertyActionListener value="This message was set on the view." target="#{bean.secondMessage}" />
+					Click Here
+				</h:commandLink>
+			</h:panelGrid>
+			<h:panelGrid columns="2" rendered="#{not empty bean.secondMessage}">
+				<h:outputText value="#{bean.secondMessage}"/>
+				<h:commandLink update="@form">
+					<f:setPropertyActionListener value="This message will never appear." target="#{bean.thirdMessage}" />
+					Click Here Again
+				</h:commandLink>
+			</h:panelGrid>
+			<h:panelGrid columns="2" rendered="#{not empty bean.thirdMessage}">
+				<h:outputText value="#{bean.thirdMessage}"/>
+			</h:panelGrid>
+		</h:form>
+	</h:body>
+</ui:composition>

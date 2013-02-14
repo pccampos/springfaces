@@ -247,9 +247,18 @@ public class UISelectItems extends UIComponentBase {
 		Assert.notNull(valueExpression,
 				"The 'value' attribute is requred as the parent component does not have a bound 'value'");
 		TypeDescriptor type = getTypeDescriptor(valueExpression, getFacesContext().getELContext());
+		if (type.getType() == Object.class) {
+			UIComponent compositeUIComponent = UIComponent.getCurrentCompositeComponent(getFacesContext());
+			if (compositeUIComponent != null) {
+				valueExpression = compositeUIComponent.getValueExpression("value");
+				if (valueExpression != null) {
+					type = getTypeDescriptor(valueExpression, getFacesContext().getELContext());					
+				}
+			}
+		}
 		Object valueForType = deduceValuesForType(type);
 		Assert.notNull(valueForType,
-				"The 'value' attribute is requred as select items cannot be deduced from parent componenet 'value' expression '"
+				"The 'value' attribute is required as select items cannot be deduced from parent componenet 'value' expression '"
 						+ valueExpression + "'");
 		return valueForType;
 	}

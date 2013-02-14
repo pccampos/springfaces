@@ -136,7 +136,7 @@ public class UISelectItems extends UIComponentBase {
 
 	private ExposedUISelectItems exposedUISelectItems = new ExposedUISelectItems();
 
-	private UISelectItemsConverter converter = new UISelectItemsConverter();
+	private UISelectItemsConverter converter = new UISelectItemsConverter(this);
 
 	private List<SelectItem> selectItems;
 
@@ -618,7 +618,7 @@ public class UISelectItems extends UIComponentBase {
 	/**
 	 * Internal JSF {@link javax.faces.component.UISelectItems} used to expose items from the outer class.
 	 */
-	class ExposedUISelectItems extends javax.faces.component.UISelectItems {
+	public class ExposedUISelectItems extends javax.faces.component.UISelectItems {
 		@Override
 		public String getId() {
 			return UISelectItems.this.getId() + "_ExposedSelectItems";
@@ -633,9 +633,20 @@ public class UISelectItems extends UIComponentBase {
 	/**
 	 * Internal JSF {@link Converter} used to convert items from the outer class.
 	 */
-	class UISelectItemsConverter extends SelectItemsConverter {
+	public static class UISelectItemsConverter extends SelectItemsConverter {
+		
+		UISelectItems uiSelectItems;
+
+		public UISelectItemsConverter() {
+		}
+		
+		public UISelectItemsConverter(UISelectItems uiSelectItems) {
+			this.uiSelectItems = uiSelectItems;
+		}
+
 		public String getAsString(FacesContext context, UIComponent component, Object value) {
-			return UISelectItems.this.getItemConverterStringValue(value);
+			return uiSelectItems.getItemConverterStringValue(value);
 		}
 	}
+	
 }

@@ -28,6 +28,7 @@ import java.util.concurrent.Callable;
 
 import javax.el.ELContext;
 import javax.el.ValueExpression;
+import javax.faces.component.StateHolder;
 import javax.faces.component.UIComponent;
 import javax.faces.component.UIComponentBase;
 import javax.faces.component.UISelectMany;
@@ -136,7 +137,7 @@ public class UISelectItems extends UIComponentBase {
 
 	private ExposedUISelectItems exposedUISelectItems = new ExposedUISelectItems();
 
-	private UISelectItemsConverter converter = new UISelectItemsConverter(this);
+	transient private UISelectItemsConverter converter = new UISelectItemsConverter();
 
 	private List<SelectItem> selectItems;
 
@@ -642,19 +643,24 @@ public class UISelectItems extends UIComponentBase {
 	/**
 	 * Internal JSF {@link Converter} used to convert items from the outer class.
 	 */
-	public static class UISelectItemsConverter extends SelectItemsConverter {
+	public class UISelectItemsConverter extends SelectItemsConverter implements StateHolder {
 		
-		UISelectItems uiSelectItems;
-
-		public UISelectItemsConverter() {
-		}
-		
-		public UISelectItemsConverter(UISelectItems uiSelectItems) {
-			this.uiSelectItems = uiSelectItems;
-		}
-
 		public String getAsString(FacesContext context, UIComponent component, Object value) {
-			return uiSelectItems.getItemConverterStringValue(value);
+			return UISelectItems.this.getItemConverterStringValue(value);
+		}
+
+		public Object saveState(FacesContext context) {
+			return null;
+		}
+
+		public void restoreState(FacesContext context, Object state) {
+		}
+
+		public boolean isTransient() {
+			return true;
+		}
+
+		public void setTransient(boolean newTransientValue) {
 		}
 	}
 	

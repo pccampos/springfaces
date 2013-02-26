@@ -28,6 +28,11 @@ import org.springframework.web.bind.annotation.RequestMapping;
 @Controller
 public class SelectItemsExampleController {
 
+	@RequestMapping("/selectitems/selectonejpapartial")
+	public Model selectOneJpaPartial() {
+		return new ExtendedModelMap().addAttribute("exampleBean", new ExampleSelectItemsBean());
+	}
+
 	@RequestMapping("/selectitems/selectonejpa")
 	public Model selectOneJpa() {
 		// Select items values can be bound to any bean, items contents can constructed dynamically using EL

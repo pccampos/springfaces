@@ -28,7 +28,6 @@ import java.util.concurrent.Callable;
 
 import javax.el.ELContext;
 import javax.el.ValueExpression;
-import javax.faces.component.StateHolder;
 import javax.faces.component.UIComponent;
 import javax.faces.component.UIComponentBase;
 import javax.faces.component.UISelectMany;
@@ -137,7 +136,7 @@ public class UISelectItems extends UIComponentBase {
 
 	private ExposedUISelectItems exposedUISelectItems = new ExposedUISelectItems();
 
-	transient private UISelectItemsConverter converter = new UISelectItemsConverter();
+	transient private SelectItemsConverter converter = new SelectItemsConverter();
 
 	private List<SelectItem> selectItems;
 
@@ -380,7 +379,7 @@ public class UISelectItems extends UIComponentBase {
 	 * @return the converted <tt>String</tt> value
 	 * @see #deduceItemConverterStringValue(Object)
 	 */
-	protected final String getItemConverterStringValue(final Object value) {
+	public final String getItemConverterStringValue(final Object value) {
 		String var = getVar(DEFAULT_VAR);
 		return FacesUtils.doWithRequestScopeVariable(getFacesContext(), var, value, new Callable<String>() {
 			public String call() throws Exception {
@@ -637,30 +636,6 @@ public class UISelectItems extends UIComponentBase {
 		@Override
 		public Object getValue() {
 			return UISelectItems.this.getSelectItems();
-		}
-	}
-
-	/**
-	 * Internal JSF {@link Converter} used to convert items from the outer class.
-	 */
-	public class UISelectItemsConverter extends SelectItemsConverter implements StateHolder {
-		
-		public String getAsString(FacesContext context, UIComponent component, Object value) {
-			return UISelectItems.this.getItemConverterStringValue(value);
-		}
-
-		public Object saveState(FacesContext context) {
-			return null;
-		}
-
-		public void restoreState(FacesContext context, Object state) {
-		}
-
-		public boolean isTransient() {
-			return true;
-		}
-
-		public void setTransient(boolean newTransientValue) {
 		}
 	}
 	

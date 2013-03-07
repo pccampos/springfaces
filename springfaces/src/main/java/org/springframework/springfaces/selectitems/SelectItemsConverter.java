@@ -25,6 +25,7 @@ import javax.faces.convert.Converter;
 import javax.faces.model.SelectItem;
 
 import org.springframework.springfaces.selectitems.ui.SelectItemsIterator;
+import org.springframework.springfaces.selectitems.ui.UISelectItems;
 import org.springframework.util.Assert;
 import org.springframework.util.ObjectUtils;
 
@@ -37,7 +38,24 @@ import org.springframework.util.ObjectUtils;
  * 
  * @author Phillip Webb
  */
-public abstract class SelectItemsConverter implements Converter {
+public class SelectItemsConverter implements Converter {
+
+	public String getAsString(FacesContext context, UIComponent component, Object value) {
+		UISelectItems uiSelectItems = null;
+		for (UIComponent childComponent : component.getChildren()) {
+			if (childComponent instanceof UISelectItems) {
+				uiSelectItems = (UISelectItems) childComponent;
+				break;
+			}
+		}
+		if (uiSelectItems != null) {
+			return uiSelectItems.getItemConverterStringValue(value);
+		} else if (value != null) {
+			return value.toString();
+		} else {
+			return "";
+		}
+	}
 
 	public Object getAsObject(FacesContext context, UIComponent component, String value) {
 		SelectItem matchingSelectItem = null;

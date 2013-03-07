@@ -67,8 +67,8 @@ import org.springframework.springfaces.FacesContextSetter;
 import org.springframework.springfaces.SpringFacesMocks;
 import org.springframework.springfaces.message.NoSuchObjectMessageException;
 import org.springframework.springfaces.message.ObjectMessageSource;
+import org.springframework.springfaces.selectitems.SelectItemsConverter;
 import org.springframework.springfaces.selectitems.ui.UISelectItems.ExposedUISelectItems;
-import org.springframework.springfaces.selectitems.ui.UISelectItems.UISelectItemsConverter;
 
 /**
  * Tests for {@link UISelectItems}.
@@ -132,7 +132,7 @@ public class UISelectItemsTest {
 		UISelectMany parent = mockParent(UISelectMany.class);
 		this.selectItems.setParent(parent);
 		verify(parent).setConverter(this.converterCaptor.capture());
-		assertThat(this.converterCaptor.getValue(), is(UISelectItemsConverter.class));
+		assertThat(this.converterCaptor.getValue(), is(SelectItemsConverter.class));
 	}
 
 	@Test
@@ -310,6 +310,7 @@ public class UISelectItemsTest {
 	@Test
 	public void shouldUseItemConverterStringValueAttribute() throws Exception {
 		UISelectMany parent = mockParent(UISelectMany.class);
+		parent.getChildren().add(this.selectItems);
 		this.selectItems.setParent(parent);
 		this.selectItems.setValue(Collections.singleton(SampleEnum.ONE));
 		RunnableAsserts assertItemIsSet = assertTheItemVarIsSet("item", SampleEnum.ONE);
@@ -399,6 +400,7 @@ public class UISelectItemsTest {
 	@Test
 	public void shouldUseEntityIdForConverter() throws Exception {
 		UISelectMany parent = mockParent(UISelectMany.class);
+		parent.getChildren().add(this.selectItems);
 		this.selectItems.setParent(parent);
 		SampleEntity entity = new SampleEntity();
 		this.selectItems.setValue(Collections.singleton(entity));

@@ -8,7 +8,7 @@
 	xmlns:s="http://springframework.org/tags/springfaces">
 
 	<h:head>
-		<title>Select Items</title>
+		<title>Select Items - Select One (JPA Partial)</title>
 	</h:head>
 
 	<h:body>
@@ -16,7 +16,7 @@
 			<h:selectOneMenu id="select" value="#{exampleBean.author}">
 				<s:selectItems value="#{authorRepository.all}" var="author" itemLabel="#{author.firstName} #{author.lastName}"/>
 			</h:selectOneMenu>
-			<h:commandButton process="select" update="panel" value="Update">
+			<h:commandButton id="update" process="select" update="panel" value="Update">
 				<f:setPropertyActionListener target="#{exampleBean.panelVisible}" value="true"  />
 			</h:commandButton>
 			<h:panelGroup id="panel">

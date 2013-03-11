@@ -24,6 +24,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
  * MVC Controller to demonstrate select items.
  * 
  * @author Phillip Webb
+ * @author Pedro Casagrande de Campos
  */
 @Controller
 public class SelectItemsExampleController {

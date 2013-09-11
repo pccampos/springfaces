@@ -175,14 +175,6 @@ public class RequestMappedRedirectDestinationViewResolverTest {
 	}
 
 	@Test
-	public void shouldFailWithOverloadedMethods() throws Exception {
-		this.thrown.expect(IllegalStateException.class);
-		this.thrown.expectMessage("Unable to resolve @RequestMapped view from destination '@overloaded' : "
-				+ "More than one @RequestMapping annotated method with the name 'overloaded' exists");
-		this.resolver.resolveDestination(this.facesContext, "@overloaded", Locale.UK, null);
-	}
-
-	@Test
 	public void shouldFailIfBeanIsMissing() throws Exception {
 		this.thrown.expect(IllegalStateException.class);
 		this.thrown.expectMessage("Unable to resolve @RequestMapped view from destination '@missing.method' : "

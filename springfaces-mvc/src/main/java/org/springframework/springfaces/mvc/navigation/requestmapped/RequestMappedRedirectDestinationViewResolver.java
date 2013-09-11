@@ -187,10 +187,10 @@ public class RequestMappedRedirectDestinationViewResolver implements Destination
 		for (Method method : methods) {
 			if (method.getName().equals(handlerMethodName)
 					&& (AnnotationUtils.findAnnotation(method, RequestMapping.class) != null)) {
-				Assert.state(requestMappedMethod == null,
-						"More than one @RequestMapping annotated method with the name '" + handlerMethodName
-								+ "' exists in " + handler.getClass());
-				requestMappedMethod = method;
+				if (requestMappedMethod == null 
+						|| method.getDeclaringClass().equals(handler.getClass().getSuperclass())) {
+					requestMappedMethod = method;
+				}
 			}
 		}
 		Assert.state(requestMappedMethod != null, "Unable to find @RequestMapping annotated method '"

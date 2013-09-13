@@ -16,6 +16,7 @@
 package org.springframework.springfaces.mvc.navigation.annotation;
 
 import java.lang.reflect.Method;
+import java.lang.reflect.Proxy;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
@@ -29,6 +30,7 @@ import javax.faces.context.FacesContext;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
+import org.springframework.aop.support.AopUtils;
 import org.springframework.beans.BeansException;
 import org.springframework.beans.factory.BeanFactory;
 import org.springframework.beans.factory.BeanFactoryAware;
@@ -239,7 +241,7 @@ public class NavigationMethodOutcomeResolver extends ApplicationObjectSupport im
 		for (String beanName : getApplicationContext().getBeanNamesForType(Object.class)) {
 			Class<?> beanType = getApplicationContext().getType(beanName);
 			if (isNavigationBean(beanType)) {
-				detectNavigationMethods(beanName, beanType);
+				detectNavigationMethods(beanName, ClassUtils.getUserClass(beanType));
 			}
 		}
 	}

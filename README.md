@@ -23,18 +23,18 @@ INSTRUCTIONS
 Building
 --------
 Build using Maven 3.0.3 or above
-  mvn clean install
+
+     mvn clean install
 
 For full integration tests
-  mvn -Pintegrationtest clean install
+
+     mvn -Pintegrationtest clean install
 
 
 Running the sample
 ------------------
 To run the travel advisor sample application:
 
-  cd springfaces-samples/springfaces-traveladvisor
-  mvn cargo:run
-  http://localhost:8080/springfaces-traveladvisor/spring/advisor/cities/search
-  
-
+     cd springfaces-samples/springfaces-traveladvisor
+     mvn cargo:run
+     http://localhost:8080/springfaces-traveladvisor/spring/advisor/cities/search
